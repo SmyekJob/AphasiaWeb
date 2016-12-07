@@ -3,6 +3,7 @@ import random
 import logging
 import os
 import sys
+from content_manager import ContentManager
 
 DATA_PATH = "data"
 CASE_TAGS = ["gent", "datv", "accs", "ablt", "loct"]
@@ -19,36 +20,12 @@ class SingletonGenerator(type):
 class TaskGenerator(metaclass=SingletonGenerator):
     def __init__(self):
         self.__morph = pymorphy2.MorphAnalyzer()
-        self.data = dict()
-        self.load_data()
+        self._content_manager = ContentManager()
+        self.data = self._content_manager.load_data()
+
         logging.info(self.data)
 
-    def load_data(self):
-        self.data['default'] = {}
-        self.load_subjects("default")
-        with open(os.path.join(DATA_PATH, "topic_index.txt"), encoding="utf-8") as index:
-            for topic in index:
-                topic = topic.strip()
-                self.load_patterns(topic)
-                self.load_subjects(topic)
 
-    def load_patterns(self, topic):
-        self.data[topic] = dict()
-        with open(os.path.join(DATA_PATH, "{}.txt".format(topic)), encoding="utf-8") as topic_file:
-            buffer = list()
-            self.data[topic]['tasks'] = dict()
-            for line in topic_file:
-                line = line.strip()
-                if line != "":
-                    buffer.append(line)
-                else:
-                    self.data[topic]['tasks'][buffer[0]] = buffer[1:]
-                    buffer = list()
-
-    def load_subjects(self, topic):
-        with open(os.path.join(DATA_PATH, "{}_subjects.txt".format(topic)), encoding="utf-8") as subject_file:
-            self.data[topic]['subjects'] = subject_file.read().strip().split("\n")
-        self.data[topic]['subjects'] += self.data['default']['subjects']
 
     def __form_verb(self, verb):
         # Puts the given verb in Present Tense and 3rd person form
